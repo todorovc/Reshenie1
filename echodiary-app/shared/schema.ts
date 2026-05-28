@@ -1,26 +1,18 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 /**
  * EchoDiary intentionally does NOT persist Spotify tokens in SQLite.
  * Tokens live in server-side session memory only (see server/spotify.ts and
- * server/routes.ts). The users table is kept as a placeholder so the storage
- * layer compiles cleanly; it is not used by the app at runtime.
+ * server/routes.ts). These user types are kept only as a small placeholder
+ * for the template storage interface; they are not used by the app at runtime.
  */
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertUserSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type User = InsertUser & { id: number };
 
 // -----------------------------------------------------------------------------
 // API shapes shared between client and server

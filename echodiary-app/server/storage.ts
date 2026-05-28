@@ -1,13 +1,4 @@
-import { users } from '@shared/schema';
 import type { User, InsertUser } from '@shared/schema';
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
-
-const sqlite = new Database("data.db");
-sqlite.pragma("journal_mode = WAL");
-
-export const db = drizzle(sqlite);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
@@ -15,18 +6,23 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemStorage implements IStorage {
+  private users = new Map<number, User>();
+  private nextId = 1;
+
   async getUser(id: number): Promise<User | undefined> {
-    return db.select().from(users).where(eq(users.id, id)).get();
+    return this.users.get(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return db.select().from(users).where(eq(users.username, username)).get();
+    return Array.from(this.users.values()).find((user) => user.username === username);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    return db.insert(users).values(insertUser).returning().get();
+    const user: User = { id: this.nextId++, ...insertUser };
+    this.users.set(user.id, user);
+    return user;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
