@@ -1,0 +1,5 @@
+
+# EchoDiary App
+echodiary-app/.env
+echodiary-app/dist/
+echodiary-app/node_modules/
